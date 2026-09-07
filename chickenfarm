@@ -1,5 +1,6 @@
 --// IVR CHICKEN FARM
---// Combined + Anti-AFK
+--// Combined Mobile Landscape Version
+--// UI + Automation + Anti-AFK
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,30 +11,6 @@ local VirtualUser = game:GetService("VirtualUser")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
-
---==================================================
--- ANTI-AFK
---==================================================
-
-Player.Idled:Connect(function()
-    local Camera = workspace.CurrentCamera
-
-    if Camera then
-        VirtualUser:Button2Down(
-            Vector2.new(0, 0),
-            Camera.CFrame
-        )
-
-        task.wait(1)
-
-        VirtualUser:Button2Up(
-            Vector2.new(0, 0),
-            Camera.CFrame
-        )
-    end
-end)
-
-print("✅ Anti-AFK enabled automatically.")
 
 --==================================================
 -- REMOTES
@@ -55,13 +32,16 @@ local Settings = {
     AutoCollectEggs = false,
     AutoDepositEggs = false,
     AutoCollectCash = false,
+
     AutoUpgradeProcess = false,
     AutoMergeChickens = false,
     AutoRebirth = false,
     AutoUpgradeTierLevel = false,
-    AutoBuyChickens = false,
 
-    BuyAmount = 1
+    AutoBuyChickens = false,
+    BuyAmount = 1,
+
+    GuiScale = 0.85
 }
 
 --==================================================
@@ -101,6 +81,7 @@ local function hideEgg(Egg)
     end
 
     for _, Object in ipairs(Egg:GetDescendants()) do
+
         if Object:IsA("BasePart") then
             Object.LocalTransparencyModifier = 1
             Object.CanCollide = false
@@ -113,12 +94,14 @@ local function hideEgg(Egg)
         elseif Object:IsA("ParticleEmitter")
             or Object:IsA("Trail")
             or Object:IsA("Beam") then
+
             Object.Enabled = false
         end
     end
 end
 
 local function collectEgg(Egg)
+
     if not Settings.AutoCollectEggs then
         return
     end
@@ -139,7 +122,7 @@ local function collectEgg(Egg)
 
     Collecting[Egg] = true
 
-    -- Hide immediately to reduce visual/FPS load.
+    -- Hide locally immediately.
     hideEgg(Egg)
 
     pcall(function()
@@ -151,84 +134,110 @@ local function collectEgg(Egg)
     end)
 end
 
---==================================================
--- AUTO COLLECT EGGS
---==================================================
-
 task.spawn(function()
-    while task.wait(0.15) do
+
+    while task.wait(0.2) do
+
         if Settings.AutoCollectEggs then
+
             for _, Egg in ipairs(EggsFolder:GetChildren()) do
+
                 if Egg.Parent and not HiddenEggs[Egg] then
                     collectEgg(Egg)
                 end
+
             end
+
         end
+
     end
+
 end)
 
 EggsFolder.ChildAdded:Connect(function(Egg)
+
     if Settings.AutoCollectEggs then
+
         task.defer(function()
+
             if Egg.Parent then
                 collectEgg(Egg)
             end
+
         end)
+
     end
+
 end)
 
 EggsFolder.ChildRemoved:Connect(function(Egg)
+
     Collecting[Egg] = nil
     HiddenEggs[Egg] = nil
+
 end)
 
 --==================================================
--- REMOTE FUNCTIONS
+-- REMOTE ACTIONS
 --==================================================
 
 local function depositEggs()
+
     pcall(function()
         RemoteFunction:InvokeServer("Deposit Eggs")
     end)
+
 end
 
 local function collectCash()
+
     pcall(function()
         RemoteFunction:InvokeServer("Collect Cash")
     end)
+
 end
 
 local function upgradeProcess()
+
     pcall(function()
         RemoteFunction:InvokeServer("Upgrade Process Level")
     end)
+
 end
 
 local function mergeChickens()
+
     pcall(function()
         RemoteFunction:InvokeServer("Merge Chickens")
     end)
+
 end
 
 local function rebirth()
+
     pcall(function()
         RemoteFunction:InvokeServer("Rebirth")
     end)
+
 end
 
 local function upgradeTierLevel()
+
     pcall(function()
         RemoteFunction:InvokeServer("Upgrade Buy Tier Level")
     end)
+
 end
 
 local function buyChickens()
+
     pcall(function()
         RemoteFunction:InvokeServer(
             "Buy Chickens",
             Settings.BuyAmount
         )
     end)
+
 end
 
 --==================================================
@@ -236,60 +245,125 @@ end
 --==================================================
 
 task.spawn(function()
-    while task.wait(0.6) do
-        if Settings.AutoDepositEggs then
-            depositEggs()
-        end
-    end
-end)
 
+    while task.wait(0.7) do
+
+        if Settings.AutoDepositEggs
+            and EggMultiplier > 1.00 then
+
+            depositEggs()
+
+        end
+
+    end
+
+end)
 task.spawn(function()
-    while task.wait(0.6) do
+
+    while task.wait(0.7) do
+
         if Settings.AutoCollectCash then
             collectCash()
         end
+
     end
+
 end)
 
 task.spawn(function()
-    while task.wait(0.8) do
+
+    while task.wait(0.9) do
+
         if Settings.AutoUpgradeProcess then
             upgradeProcess()
         end
+
     end
+
 end)
 
 task.spawn(function()
-    while task.wait(0.8) do
+
+    while task.wait(0.9) do
+
         if Settings.AutoMergeChickens then
             mergeChickens()
         end
+
     end
+
 end)
 
 task.spawn(function()
-    while task.wait(1.2) do
+
+    while task.wait(1.3) do
+
         if Settings.AutoRebirth then
             rebirth()
         end
+
     end
+
 end)
 
 task.spawn(function()
-    while task.wait(0.9) do
+
+    while task.wait(1.0) do
+
         if Settings.AutoUpgradeTierLevel then
             upgradeTierLevel()
         end
+
     end
+
 end)
 
 task.spawn(function()
-    while task.wait(0.8) do
+
+    while task.wait(0.9) do
+
         if Settings.AutoBuyChickens then
             buyChickens()
         end
+
     end
+
 end)
+
+--==================================================
+-- ANTI AFK
+-- Markii source - GUI removed, logic only
+--==================================================
+
+local AntiAFKEnabled = true
+
+Player.Idled:Connect(function()
+    if not AntiAFKEnabled then
+        return
+    end
+
+    local Camera = workspace.CurrentCamera
+
+    if not Camera then
+        return
+    end
+
+    pcall(function()
+        VirtualUser:Button2Down(
+            Vector2.new(0, 0),
+            Camera.CFrame
+        )
+
+        task.wait(1)
+
+        VirtualUser:Button2Up(
+            Vector2.new(0, 0),
+            Camera.CFrame
+        )
+    end)
+end)
+
+print("✅ Anti-AFK Executed. You can now afk without being kicked.")
 
 --==================================================
 -- REMOVE OLD UI
@@ -308,18 +382,20 @@ end
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "IVRChickenFarm"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = PlayerGui
 
 --==================================================
--- MAIN
+-- MAIN WINDOW
 --==================================================
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.Size = UDim2.fromOffset(430, 600)
-Main.Position = UDim2.new(0.5, -215, 0.5, -300)
-Main.BackgroundColor3 = Color3.fromRGB(15, 15, 23)
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.Size = UDim2.fromOffset(600, 365)
+Main.Position = UDim2.fromScale(0.5, 0.5)
+Main.BackgroundColor3 = Color3.fromRGB(14, 14, 22)
 Main.BorderSizePixel = 0
 Main.ClipsDescendants = true
 Main.Parent = ScreenGui
@@ -333,224 +409,365 @@ MainStroke.Thickness = 2
 MainStroke.Parent = Main
 
 --==================================================
+-- SCALE
+--==================================================
+
+local Scale = Instance.new("UIScale")
+Scale.Scale = Settings.GuiScale
+Scale.Parent = Main
+
+--==================================================
 -- RGB
 --==================================================
 
 local RGBObjects = {}
 
 local function addRGB(Object, Offset)
+
     table.insert(RGBObjects, {
         Object = Object,
         Offset = Offset or 0
     })
+
 end
+
+addRGB(MainStroke, 0)
 
 local RGBConnection
 
 RGBConnection = RunService.Heartbeat:Connect(function()
+
     if not Main.Parent then
-        RGBConnection:Disconnect()
+
+        if RGBConnection then
+            RGBConnection:Disconnect()
+        end
+
         return
     end
 
-    local Hue = (os.clock() * 0.055) % 1
+    local Hue = (os.clock() * 0.07) % 1
 
     for _, Data in ipairs(RGBObjects) do
+
         if Data.Object and Data.Object.Parent then
+
             Data.Object.Color = Color3.fromHSV(
                 (Hue + Data.Offset) % 1,
                 0.9,
                 1
             )
-        end
-    end
-end)
 
-addRGB(MainStroke, 0)
+        end
+
+    end
+
+end)
 
 --==================================================
 -- HEADER
 --==================================================
 
 local Header = Instance.new("Frame")
-Header.Size = UDim2.new(1, 0, 0, 70)
-Header.BackgroundColor3 = Color3.fromRGB(25, 25, 36)
+Header.Size = UDim2.new(1, 0, 0, 65)
+Header.BackgroundColor3 = Color3.fromRGB(24, 24, 36)
 Header.BorderSizePixel = 0
 Header.Parent = Main
 
 local Title = Instance.new("TextLabel")
 Title.BackgroundTransparency = 1
-Title.Position = UDim2.fromOffset(20, 7)
-Title.Size = UDim2.new(1, -145, 0, 35)
+Title.Position = UDim2.fromOffset(18, 5)
+Title.Size = UDim2.new(1, -150, 0, 30)
 Title.Font = Enum.Font.GothamBold
 Title.Text = "IVR CHICKEN FARM"
-Title.TextSize = 23
+Title.TextSize = 21
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
 local TitleGradient = Instance.new("UIGradient")
 TitleGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 40, 80)),
-    ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 210, 40)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(40, 255, 120)),
-    ColorSequenceKeypoint.new(0.75, Color3.fromRGB(40, 200, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 50, 255))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 50, 80)),
+    ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 220, 40)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(50, 255, 120)),
+    ColorSequenceKeypoint.new(0.75, Color3.fromRGB(40, 190, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(190, 60, 255))
 })
 TitleGradient.Parent = Title
 
 task.spawn(function()
+
     while Title.Parent do
-        TitleGradient.Offset = Vector2.new(
-            (os.clock() * 0.12) % 2 - 1,
-            0
-        )
+
+        TitleGradient.Offset =
+            Vector2.new(
+                (os.clock() * 0.12) % 2 - 1,
+                0
+            )
 
         task.wait(0.03)
+
     end
+
 end)
 
 local Subtitle = Instance.new("TextLabel")
 Subtitle.BackgroundTransparency = 1
-Subtitle.Position = UDim2.fromOffset(21, 42)
-Subtitle.Size = UDim2.new(1, -145, 0, 20)
+Subtitle.Position = UDim2.fromOffset(20, 35)
+Subtitle.Size = UDim2.new(1, -150, 0, 20)
 Subtitle.Font = Enum.Font.Gotham
 Subtitle.Text = "Automation Panel"
-Subtitle.TextColor3 = Color3.fromRGB(155, 155, 175)
-Subtitle.TextSize = 11
+Subtitle.TextColor3 = Color3.fromRGB(150, 150, 170)
+Subtitle.TextSize = 10
 Subtitle.TextXAlignment = Enum.TextXAlignment.Left
 Subtitle.Parent = Header
+
+--==================================================
+-- BUTTON FACTORY
+--==================================================
+
+local function makeHeaderButton(Text, Position)
+
+    local Button = Instance.new("TextButton")
+    Button.Size = UDim2.fromOffset(36, 36)
+    Button.Position = Position
+    Button.BackgroundColor3 = Color3.fromRGB(43, 43, 60)
+    Button.BorderSizePixel = 0
+    Button.AutoButtonColor = false
+    Button.Text = Text
+    Button.TextColor3 = Color3.new(1, 1, 1)
+    Button.TextSize = 21
+    Button.Font = Enum.Font.GothamBold
+    Button.Parent = Header
+
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 9)
+    Corner.Parent = Button
+
+    local Stroke = Instance.new("UIStroke")
+    Stroke.Thickness = 1.5
+    Stroke.Parent = Button
+
+    addRGB(Stroke, math.random())
+
+    return Button
+end
 
 --==================================================
 -- MINIMIZE
 --==================================================
 
-local Minimize = Instance.new("TextButton")
-Minimize.Size = UDim2.fromOffset(38, 38)
-Minimize.Position = UDim2.new(1, -95, 0, 16)
-Minimize.BackgroundColor3 = Color3.fromRGB(45, 45, 62)
-Minimize.BorderSizePixel = 0
-Minimize.Text = "−"
-Minimize.TextColor3 = Color3.new(1, 1, 1)
-Minimize.TextSize = 24
-Minimize.Font = Enum.Font.GothamBold
-Minimize.AutoButtonColor = false
-Minimize.Parent = Header
-
-local MinCorner = Instance.new("UICorner")
-MinCorner.CornerRadius = UDim.new(0, 10)
-MinCorner.Parent = Minimize
-
-local MinStroke = Instance.new("UIStroke")
-MinStroke.Thickness = 1.5
-MinStroke.Parent = Minimize
-
-addRGB(MinStroke, 0.2)
+local Minimize = makeHeaderButton(
+    "−",
+    UDim2.new(1, -88, 0, 14)
+)
 
 --==================================================
 -- EXIT
 --==================================================
 
-local Exit = Instance.new("TextButton")
-Exit.Size = UDim2.fromOffset(38, 38)
-Exit.Position = UDim2.new(1, -48, 0, 16)
-Exit.BackgroundColor3 = Color3.fromRGB(45, 45, 62)
-Exit.BorderSizePixel = 0
-Exit.Text = "×"
-Exit.TextColor3 = Color3.new(1, 1, 1)
-Exit.TextSize = 24
-Exit.Font = Enum.Font.GothamBold
-Exit.AutoButtonColor = false
-Exit.Parent = Header
+local Exit = makeHeaderButton(
+    "×",
+    UDim2.new(1, -45, 0, 14)
+)
 
-local ExitCorner = Instance.new("UICorner")
-ExitCorner.CornerRadius = UDim.new(0, 10)
-ExitCorner.Parent = Exit
+--==================================================
+-- CATEGORY BAR
+--==================================================
 
-local ExitStroke = Instance.new("UIStroke")
-ExitStroke.Thickness = 1.5
-ExitStroke.Parent = Exit
+local CategoryBar = Instance.new("Frame")
+CategoryBar.Position = UDim2.fromOffset(12, 76)
+CategoryBar.Size = UDim2.new(0, 145, 1, -88)
+CategoryBar.BackgroundColor3 = Color3.fromRGB(21, 21, 32)
+CategoryBar.BorderSizePixel = 0
+CategoryBar.Parent = Main
 
-addRGB(ExitStroke, 0.4)
+local CategoryCorner = Instance.new("UICorner")
+CategoryCorner.CornerRadius = UDim.new(0, 12)
+CategoryCorner.Parent = CategoryBar
 
-Exit.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
+local CategoryPadding = Instance.new("UIPadding")
+CategoryPadding.PaddingTop = UDim.new(0, 10)
+CategoryPadding.PaddingLeft = UDim.new(0, 8)
+CategoryPadding.PaddingRight = UDim.new(0, 8)
+CategoryPadding.Parent = CategoryBar
+
+local CategoryLayout = Instance.new("UIListLayout")
+CategoryLayout.Padding = UDim.new(0, 8)
+CategoryLayout.Parent = CategoryBar
+
+--==================================================
+-- CONTENT
+--==================================================
+
+local Content = Instance.new("Frame")
+Content.Position = UDim2.fromOffset(167, 76)
+Content.Size = UDim2.new(1, -179, 1, -88)
+Content.BackgroundColor3 = Color3.fromRGB(19, 19, 29)
+Content.BorderSizePixel = 0
+Content.ClipsDescendants = true
+Content.Parent = Main
+
+local ContentCorner = Instance.new("UICorner")
+ContentCorner.CornerRadius = UDim.new(0, 12)
+ContentCorner.Parent = Content
+
+--==================================================
+-- CATEGORY BUTTON
+--==================================================
+
+local Categories = {}
+
+local function createCategory(Name)
+
+    local Button = Instance.new("TextButton")
+    Button.Size = UDim2.new(1, 0, 0, 48)
+    Button.BackgroundColor3 = Color3.fromRGB(38, 38, 52)
+    Button.BorderSizePixel = 0
+    Button.AutoButtonColor = false
+    Button.Text = Name
+    Button.TextColor3 = Color3.fromRGB(220, 220, 235)
+    Button.Font = Enum.Font.GothamBold
+    Button.TextSize = 11
+    Button.Parent = CategoryBar
+
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 9)
+    Corner.Parent = Button
+
+    local Stroke = Instance.new("UIStroke")
+    Stroke.Thickness = 1
+    Stroke.Transparency = 0.5
+    Stroke.Parent = Button
+
+    addRGB(Stroke, math.random())
+
+    Categories[Name] = Button
+
+    return Button
+end
+
+local AutomationCategory = createCategory("AUTOMATION")
+local ProgressCategory = createCategory("PROGRESS")
+local SettingsCategory = createCategory("SETTINGS")
+
+--==================================================
+-- PAGE CREATOR
+--==================================================
+
+local Pages = {}
+
+local function createPage(Name)
+
+    local Page = Instance.new("ScrollingFrame")
+    Page.Name = Name
+    Page.Size = UDim2.new(1, -16, 1, -16)
+    Page.Position = UDim2.fromOffset(8, 8)
+    Page.BackgroundTransparency = 1
+    Page.BorderSizePixel = 0
+    Page.ScrollBarThickness = 4
+    Page.ScrollBarImageTransparency = 0.2
+    Page.ScrollingDirection = Enum.ScrollingDirection.Y
+    Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    Page.CanvasSize = UDim2.fromOffset(0, 0)
+    Page.Visible = false
+    Page.Parent = Content
+
+    local Padding = Instance.new("UIPadding")
+    Padding.PaddingTop = UDim.new(0, 4)
+    Padding.PaddingBottom = UDim.new(0, 10)
+    Padding.PaddingLeft = UDim.new(0, 4)
+    Padding.PaddingRight = UDim.new(0, 4)
+    Padding.Parent = Page
+
+    local Layout = Instance.new("UIListLayout")
+    Layout.Padding = UDim.new(0, 7)
+    Layout.SortOrder = Enum.SortOrder.LayoutOrder
+    Layout.Parent = Page
+
+    Pages[Name] = Page
+
+    return Page
+end
+
+local AutomationPage = createPage("Automation")
+local ProgressPage = createPage("Progress")
+local SettingsPage = createPage("Settings")
+
+--==================================================
+-- SHOW CATEGORY
+--==================================================
+
+local CurrentPage
+
+local function showCategory(Name)
+
+    for PageName, Page in pairs(Pages) do
+        Page.Visible = PageName == Name
+    end
+
+    for CategoryName, Button in pairs(Categories) do
+
+        if CategoryName == Name:upper() then
+
+            Button.BackgroundColor3 =
+                Color3.fromRGB(45, 120, 80)
+
+        else
+
+            Button.BackgroundColor3 =
+                Color3.fromRGB(38, 38, 52)
+
+        end
+
+    end
+
+    CurrentPage = Name
+
+end
+
+AutomationCategory.MouseButton1Click:Connect(function()
+    showCategory("Automation")
+end)
+
+ProgressCategory.MouseButton1Click:Connect(function()
+    showCategory("Progress")
+end)
+
+SettingsCategory.MouseButton1Click:Connect(function()
+    showCategory("Settings")
 end)
 
 --==================================================
--- SCROLL
---==================================================
-
-local Scroll = Instance.new("ScrollingFrame")
-Scroll.Name = "Controls"
-Scroll.Position = UDim2.fromOffset(12, 80)
-Scroll.Size = UDim2.new(1, -24, 1, -92)
-Scroll.BackgroundTransparency = 1
-Scroll.BorderSizePixel = 0
-Scroll.ScrollBarThickness = 5
-Scroll.ScrollBarImageTransparency = 0.15
-Scroll.CanvasSize = UDim2.fromOffset(0, 0)
-Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-Scroll.ScrollingDirection = Enum.ScrollingDirection.Y
-Scroll.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
-Scroll.Parent = Main
-
-local Padding = Instance.new("UIPadding")
-Padding.PaddingTop = UDim.new(0, 5)
-Padding.PaddingBottom = UDim.new(0, 15)
-Padding.PaddingLeft = UDim.new(0, 5)
-Padding.PaddingRight = UDim.new(0, 5)
-Padding.Parent = Scroll
-
-local Layout = Instance.new("UIListLayout")
-Layout.Padding = UDim.new(0, 9)
-Layout.SortOrder = Enum.SortOrder.LayoutOrder
-Layout.Parent = Scroll
-
---==================================================
--- SECTION
---==================================================
-
-local function createSection(Name)
-    local Section = Instance.new("TextLabel")
-    Section.Size = UDim2.new(1, -10, 0, 30)
-    Section.BackgroundTransparency = 1
-    Section.Font = Enum.Font.GothamBold
-    Section.Text = Name
-    Section.TextSize = 15
-    Section.TextColor3 = Color3.fromRGB(225, 225, 240)
-    Section.TextXAlignment = Enum.TextXAlignment.Left
-    Section.Parent = Scroll
-
-    return Section
-end
-
---==================================================
--- TOGGLES
+-- TOGGLE CREATOR
 --==================================================
 
 local DisplayNames = {
+
     AutoCollectEggs = "Auto Collect Eggs",
     AutoDepositEggs = "Auto Deposit Eggs",
     AutoCollectCash = "Auto Collect Cash",
+
     AutoUpgradeProcess = "Auto Upgrade Process",
     AutoMergeChickens = "Auto Merge Chickens",
     AutoRebirth = "Auto Rebirth",
     AutoUpgradeTierLevel = "Auto Upgrade Tier Level"
+
 }
 
-local function createToggle(Name)
+local function createToggle(Page, Name)
+
     local Button = Instance.new("TextButton")
-    Button.Size = UDim2.new(1, -10, 0, 52)
-    Button.BackgroundColor3 = Color3.fromRGB(39, 39, 53)
+    Button.Size = UDim2.new(1, -8, 0, 47)
+    Button.BackgroundColor3 = Color3.fromRGB(38, 38, 53)
     Button.BorderSizePixel = 0
     Button.AutoButtonColor = false
     Button.Font = Enum.Font.GothamBold
-    Button.TextSize = 13
+    Button.TextSize = 12
     Button.TextColor3 = Color3.new(1, 1, 1)
-    Button.Parent = Scroll
+    Button.Parent = Page
 
     local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 11)
+    Corner.CornerRadius = UDim.new(0, 9)
     Corner.Parent = Button
 
     local Stroke = Instance.new("UIStroke")
@@ -561,9 +778,9 @@ local function createToggle(Name)
     addRGB(Stroke, math.random())
 
     local Indicator = Instance.new("Frame")
-    Indicator.Size = UDim2.fromOffset(7, 30)
-    Indicator.Position = UDim2.fromOffset(10, 11)
-    Indicator.BackgroundColor3 = Color3.fromRGB(80, 80, 100)
+    Indicator.Size = UDim2.fromOffset(6, 25)
+    Indicator.Position = UDim2.fromOffset(9, 11)
+    Indicator.BackgroundColor3 = Color3.fromRGB(75, 75, 95)
     Indicator.BorderSizePixel = 0
     Indicator.Parent = Button
 
@@ -571,80 +788,110 @@ local function createToggle(Name)
     IndicatorCorner.CornerRadius = UDim.new(1, 0)
     IndicatorCorner.Parent = Indicator
 
-    local function Update()
+    local function update()
+
         if Settings[Name] then
-            Button.Text = DisplayNames[Name] .. "   ON"
 
-            TweenService:Create(
-                Button,
-                TweenInfo.new(0.15),
-                {BackgroundColor3 = Color3.fromRGB(32, 135, 75)}
-            ):Play()
+            Button.Text =
+                DisplayNames[Name] .. "   ON"
 
-            TweenService:Create(
-                Indicator,
-                TweenInfo.new(0.15),
-                {BackgroundColor3 = Color3.fromRGB(100, 255, 145)}
-            ):Play()
+            Button.BackgroundColor3 =
+                Color3.fromRGB(31, 115, 67)
+
+            Indicator.BackgroundColor3 =
+                Color3.fromRGB(90, 255, 135)
+
         else
-            Button.Text = DisplayNames[Name] .. "   OFF"
 
-            TweenService:Create(
-                Button,
-                TweenInfo.new(0.15),
-                {BackgroundColor3 = Color3.fromRGB(39, 39, 53)}
-            ):Play()
+            Button.Text =
+                DisplayNames[Name] .. "   OFF"
 
-            TweenService:Create(
-                Indicator,
-                TweenInfo.new(0.15),
-                {BackgroundColor3 = Color3.fromRGB(80, 80, 100)}
-            ):Play()
+            Button.BackgroundColor3 =
+                Color3.fromRGB(38, 38, 53)
+
+            Indicator.BackgroundColor3 =
+                Color3.fromRGB(75, 75, 95)
+
         end
+
     end
 
     Button.MouseButton1Click:Connect(function()
+
         Settings[Name] = not Settings[Name]
-        Update()
+
+        update()
+
     end)
 
-    Update()
+    update()
 
     return Button
 end
 
 --==================================================
--- AUTOMATION
+-- AUTOMATION PAGE
 --==================================================
 
-createSection("AUTOMATION")
+createToggle(
+    AutomationPage,
+    "AutoCollectEggs"
+)
 
-createToggle("AutoCollectEggs")
-createToggle("AutoDepositEggs")
-createToggle("AutoCollectCash")
+createToggle(
+    AutomationPage,
+    "AutoDepositEggs"
+)
+
+createToggle(
+    AutomationPage,
+    "AutoCollectCash"
+)
 
 --==================================================
--- PROGRESS
+-- SECTION TITLE
 --==================================================
 
-createSection("PROGRESS")
+local function createSectionTitle(Page, Text)
+
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(1, -8, 0, 28)
+    Label.BackgroundTransparency = 1
+    Label.Text = Text
+    Label.TextColor3 = Color3.fromRGB(225, 225, 240)
+    Label.Font = Enum.Font.GothamBold
+    Label.TextSize = 14
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Parent = Page
+
+    return Label
+end
 
 --==================================================
--- AUTO BUY CHICKENS
+-- PROGRESS PAGE
+--==================================================
+
+createSectionTitle(
+    ProgressPage,
+    "CHICKEN PROGRESSION"
+)
+
+--==================================================
+-- BUY CHICKENS
 --==================================================
 
 local BuyButton = Instance.new("TextButton")
-BuyButton.Size = UDim2.new(1, -10, 0, 52)
-BuyButton.BackgroundColor3 = Color3.fromRGB(39, 39, 53)
+BuyButton.Size = UDim2.new(1, -8, 0, 47)
+BuyButton.BackgroundColor3 = Color3.fromRGB(38, 38, 53)
 BuyButton.BorderSizePixel = 0
 BuyButton.AutoButtonColor = false
 BuyButton.Font = Enum.Font.GothamBold
-BuyButton.TextSize = 13
+BuyButton.TextSize = 12
 BuyButton.TextColor3 = Color3.new(1, 1, 1)
-BuyButton.Parent = Scroll
+BuyButton.Parent = ProgressPage
 
 local BuyCorner = Instance.new("UICorner")
-BuyCorner.CornerRadius = UDim.new(0, 11)
+BuyCorner.CornerRadius = UDim.new(0, 9)
 BuyCorner.Parent = BuyButton
 
 local BuyStroke = Instance.new("UIStroke")
@@ -652,48 +899,54 @@ BuyStroke.Thickness = 1
 BuyStroke.Transparency = 0.65
 BuyStroke.Parent = BuyButton
 
-addRGB(BuyStroke, 0.6)
+addRGB(BuyStroke, 0.4)
 
 local function updateBuyButton()
+
     if Settings.AutoBuyChickens then
-        BuyButton.Text = "Auto Buy Chickens   ON"
 
-        TweenService:Create(
-            BuyButton,
-            TweenInfo.new(0.15),
-            {BackgroundColor3 = Color3.fromRGB(32, 135, 75)}
-        ):Play()
+        BuyButton.Text =
+            "Auto Buy Chickens   ON"
+
+        BuyButton.BackgroundColor3 =
+            Color3.fromRGB(31, 115, 67)
+
     else
-        BuyButton.Text = "Auto Buy Chickens   OFF"
 
-        TweenService:Create(
-            BuyButton,
-            TweenInfo.new(0.15),
-            {BackgroundColor3 = Color3.fromRGB(39, 39, 53)}
-        ):Play()
+        BuyButton.Text =
+            "Auto Buy Chickens   OFF"
+
+        BuyButton.BackgroundColor3 =
+            Color3.fromRGB(38, 38, 53)
+
     end
+
 end
 
 BuyButton.MouseButton1Click:Connect(function()
-    Settings.AutoBuyChickens = not Settings.AutoBuyChickens
+
+    Settings.AutoBuyChickens =
+        not Settings.AutoBuyChickens
+
     updateBuyButton()
+
 end)
 
 updateBuyButton()
 
 --==================================================
--- BUY AMOUNT DROPDOWN
+-- BUY AMOUNT
 --==================================================
 
 local Dropdown = Instance.new("Frame")
-Dropdown.Size = UDim2.new(1, -10, 0, 52)
-Dropdown.BackgroundColor3 = Color3.fromRGB(39, 39, 53)
+Dropdown.Size = UDim2.new(1, -8, 0, 47)
+Dropdown.BackgroundColor3 = Color3.fromRGB(38, 38, 53)
 Dropdown.BorderSizePixel = 0
 Dropdown.ClipsDescendants = true
-Dropdown.Parent = Scroll
+Dropdown.Parent = ProgressPage
 
 local DropCorner = Instance.new("UICorner")
-DropCorner.CornerRadius = UDim.new(0, 11)
+DropCorner.CornerRadius = UDim.new(0, 9)
 DropCorner.Parent = Dropdown
 
 local DropStroke = Instance.new("UIStroke")
@@ -701,26 +954,25 @@ DropStroke.Thickness = 1
 DropStroke.Transparency = 0.65
 DropStroke.Parent = Dropdown
 
-addRGB(DropStroke, 0.8)
+addRGB(DropStroke, 0.7)
 
 local DropButton = Instance.new("TextButton")
-DropButton.Size = UDim2.new(1, 0, 0, 52)
+DropButton.Size = UDim2.new(1, 0, 0, 47)
 DropButton.BackgroundTransparency = 1
 DropButton.BorderSizePixel = 0
 DropButton.AutoButtonColor = false
 DropButton.Text = "Buy Amount: 1   ▼"
 DropButton.TextColor3 = Color3.new(1, 1, 1)
 DropButton.Font = Enum.Font.GothamBold
-DropButton.TextSize = 13
+DropButton.TextSize = 12
 DropButton.Parent = Dropdown
 
 local AmountList = Instance.new("ScrollingFrame")
-AmountList.Position = UDim2.fromOffset(8, 57)
+AmountList.Position = UDim2.fromOffset(8, 52)
 AmountList.Size = UDim2.new(1, -16, 0, 150)
-AmountList.BackgroundColor3 = Color3.fromRGB(26, 26, 38)
+AmountList.BackgroundColor3 = Color3.fromRGB(25, 25, 37)
 AmountList.BorderSizePixel = 0
 AmountList.ScrollBarThickness = 4
-AmountList.CanvasSize = UDim2.fromOffset(0, 0)
 AmountList.AutomaticCanvasSize = Enum.AutomaticSize.Y
 AmountList.ScrollingDirection = Enum.ScrollingDirection.Y
 AmountList.Visible = false
@@ -732,58 +984,257 @@ AmountCorner.Parent = AmountList
 
 local AmountLayout = Instance.new("UIListLayout")
 AmountLayout.Padding = UDim.new(0, 5)
-AmountLayout.SortOrder = Enum.SortOrder.LayoutOrder
 AmountLayout.Parent = AmountList
 
 for _, Amount in ipairs({1, 5, 25, 100}) do
-    local Option = Instance.new("TextButton")
 
-    Option.Size = UDim2.new(1, -5, 0, 35)
+    local Option = Instance.new("TextButton")
+    Option.Size = UDim2.new(1, -5, 0, 34)
     Option.BackgroundColor3 = Color3.fromRGB(48, 48, 65)
     Option.BorderSizePixel = 0
     Option.AutoButtonColor = false
     Option.Text = "🐔  " .. tostring(Amount)
     Option.TextColor3 = Color3.new(1, 1, 1)
     Option.Font = Enum.Font.GothamBold
-    Option.TextSize = 12
+    Option.TextSize = 11
     Option.Parent = AmountList
 
-    local OptionCorner = Instance.new("UICorner")
-    OptionCorner.CornerRadius = UDim.new(0, 7)
-    OptionCorner.Parent = Option
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 7)
+    Corner.Parent = Option
 
     Option.MouseButton1Click:Connect(function()
+
         Settings.BuyAmount = Amount
 
         DropButton.Text =
-            "Buy Amount: " .. tostring(Amount) .. "   ▼"
+            "Buy Amount: " ..
+            tostring(Amount) ..
+            "   ▼"
 
         AmountList.Visible = false
-        Dropdown.Size = UDim2.new(1, -10, 0, 52)
+
+        Dropdown.Size =
+            UDim2.new(1, -8, 0, 47)
+
     end)
+
 end
 
 DropButton.MouseButton1Click:Connect(function()
-    AmountList.Visible = not AmountList.Visible
+
+    AmountList.Visible =
+        not AmountList.Visible
 
     if AmountList.Visible then
-        Dropdown.Size = UDim2.new(1, -10, 0, 215)
+
+        Dropdown.Size =
+            UDim2.new(1, -8, 0, 207)
+
     else
-        Dropdown.Size = UDim2.new(1, -10, 0, 52)
+
+        Dropdown.Size =
+            UDim2.new(1, -8, 0, 47)
+
     end
+
 end)
 
 --==================================================
--- OTHER PROGRESS TOGGLES
+-- OTHER PROGRESS
 --==================================================
 
-createToggle("AutoUpgradeProcess")
-createToggle("AutoMergeChickens")
-createToggle("AutoRebirth")
-createToggle("AutoUpgradeTierLevel")
+createToggle(
+    ProgressPage,
+    "AutoUpgradeProcess"
+)
+
+createToggle(
+    ProgressPage,
+    "AutoMergeChickens"
+)
+
+createToggle(
+    ProgressPage,
+    "AutoRebirth"
+)
+
+createToggle(
+    ProgressPage,
+    "AutoUpgradeTierLevel"
+)
 
 --==================================================
--- DRAGGING
+-- EGG MULTIPLIER TRACKING
+--==================================================
+
+local EggMultiplier = 1.00
+
+RemoteEvent.OnClientEvent:Connect(function(EventName, Data)
+
+    if EventName ~= "UI-Notification" then
+        return
+    end
+
+    if type(Data) ~= "table" or type(Data.Text) ~= "string" then
+        return
+    end
+
+    local Text = Data.Text
+
+    -- Matches:
+    -- "Egg Multiplier rose to 1.00x!"
+    -- "Egg Multiplier rose to 1.25x!"
+    -- etc.
+    local Multiplier = Text:match(
+        "Egg%s+Multiplier%s+rose%s+to%s+([%d%.]+)x"
+    )
+
+    if Multiplier then
+        EggMultiplier = tonumber(Multiplier) or EggMultiplier
+
+        print(
+            "🥚 Egg Multiplier:",
+            string.format("%.2fx", EggMultiplier)
+        )
+    end
+
+end)
+
+--==================================================
+-- SETTINGS PAGE
+--==================================================
+
+createSectionTitle(
+    SettingsPage,
+    "GUI SETTINGS"
+)
+
+local SizeLabel = Instance.new("TextLabel")
+SizeLabel.Size = UDim2.new(1, -8, 0, 35)
+SizeLabel.BackgroundColor3 = Color3.fromRGB(38, 38, 53)
+SizeLabel.BorderSizePixel = 0
+SizeLabel.Text = "GUI Size: 85%"
+SizeLabel.TextColor3 = Color3.new(1, 1, 1)
+SizeLabel.Font = Enum.Font.GothamBold
+SizeLabel.TextSize = 12
+SizeLabel.Parent = SettingsPage
+
+local SizeCorner = Instance.new("UICorner")
+SizeCorner.CornerRadius = UDim.new(0, 9)
+SizeCorner.Parent = SizeLabel
+
+local SizeBox = Instance.new("Frame")
+SizeBox.Size = UDim2.new(1, -8, 0, 48)
+SizeBox.BackgroundColor3 = Color3.fromRGB(31, 31, 44)
+SizeBox.BorderSizePixel = 0
+SizeBox.Parent = SettingsPage
+
+local SizeBoxCorner = Instance.new("UICorner")
+SizeBoxCorner.CornerRadius = UDim.new(0, 9)
+SizeBoxCorner.Parent = SizeBox
+
+local SizeMinus = Instance.new("TextButton")
+SizeMinus.Size = UDim2.fromOffset(45, 38)
+SizeMinus.Position = UDim2.fromOffset(5, 5)
+SizeMinus.BackgroundColor3 = Color3.fromRGB(48, 48, 65)
+SizeMinus.Text = "−"
+SizeMinus.TextColor3 = Color3.new(1, 1, 1)
+SizeMinus.TextSize = 20
+SizeMinus.Font = Enum.Font.GothamBold
+SizeMinus.BorderSizePixel = 0
+SizeMinus.Parent = SizeBox
+
+local MinusCorner = Instance.new("UICorner")
+MinusCorner.CornerRadius = UDim.new(0, 8)
+MinusCorner.Parent = SizeMinus
+
+local SizePlus = Instance.new("TextButton")
+SizePlus.Size = UDim2.fromOffset(45, 38)
+SizePlus.Position = UDim2.new(1, -50, 0, 5)
+SizePlus.BackgroundColor3 = Color3.fromRGB(48, 48, 65)
+SizePlus.Text = "+"
+SizePlus.TextColor3 = Color3.new(1, 1, 1)
+SizePlus.TextSize = 20
+SizePlus.Font = Enum.Font.GothamBold
+SizePlus.BorderSizePixel = 0
+SizePlus.Parent = SizeBox
+
+local PlusCorner = Instance.new("UICorner")
+PlusCorner.CornerRadius = UDim.new(0, 8)
+PlusCorner.Parent = SizePlus
+
+local SizeValue = Instance.new("TextLabel")
+SizeValue.BackgroundTransparency = 1
+SizeValue.Position = UDim2.fromOffset(55, 0)
+SizeValue.Size = UDim2.new(1, -110, 1, 0)
+SizeValue.Text = "85%"
+SizeValue.TextColor3 = Color3.new(1, 1, 1)
+SizeValue.Font = Enum.Font.GothamBold
+SizeValue.TextSize = 13
+SizeValue.Parent = SizeBox
+
+local function updateGuiScale()
+
+    Settings.GuiScale =
+        math.clamp(
+            Settings.GuiScale,
+            0.60,
+            1.10
+        )
+
+    Scale.Scale =
+        Settings.GuiScale
+
+    local Percent =
+        math.floor(Settings.GuiScale * 100)
+
+    SizeLabel.Text =
+        "GUI Size: " .. Percent .. "%"
+
+    SizeValue.Text =
+        Percent .. "%"
+
+end
+
+SizeMinus.MouseButton1Click:Connect(function()
+
+    Settings.GuiScale =
+        Settings.GuiScale - 0.05
+
+    updateGuiScale()
+
+end)
+
+SizePlus.MouseButton1Click:Connect(function()
+
+    Settings.GuiScale =
+        Settings.GuiScale + 0.05
+
+    updateGuiScale()
+
+end)
+
+--==================================================
+-- ANTI AFK STATUS
+--==================================================
+
+local AFKStatus = Instance.new("TextLabel")
+AFKStatus.Size = UDim2.new(1, -8, 0, 45)
+AFKStatus.BackgroundColor3 = Color3.fromRGB(31, 115, 67)
+AFKStatus.BorderSizePixel = 0
+AFKStatus.Text = "●  ANTI-AFK ENABLED"
+AFKStatus.TextColor3 = Color3.new(1, 1, 1)
+AFKStatus.Font = Enum.Font.GothamBold
+AFKStatus.TextSize = 12
+AFKStatus.Parent = SettingsPage
+
+local AFKCorner = Instance.new("UICorner")
+AFKCorner.CornerRadius = UDim.new(0, 9)
+AFKCorner.Parent = AFKStatus
+
+--==================================================
+-- DRAG MAIN WINDOW
 --==================================================
 
 local Dragging = false
@@ -791,41 +1242,52 @@ local DragStart
 local StartPosition
 
 Header.InputBegan:Connect(function(Input)
+
     if Input.UserInputType == Enum.UserInputType.MouseButton1
         or Input.UserInputType == Enum.UserInputType.Touch then
 
         Dragging = true
         DragStart = Input.Position
         StartPosition = Main.Position
+
     end
+
 end)
 
 Header.InputEnded:Connect(function(Input)
+
     if Input.UserInputType == Enum.UserInputType.MouseButton1
         or Input.UserInputType == Enum.UserInputType.Touch then
 
         Dragging = false
+
     end
+
 end)
 
 UserInputService.InputChanged:Connect(function(Input)
+
     if not Dragging then
         return
     end
 
     if Input.UserInputType ~= Enum.UserInputType.MouseMovement
         and Input.UserInputType ~= Enum.UserInputType.Touch then
+
         return
     end
 
-    local Delta = Input.Position - DragStart
+    local Delta =
+        Input.Position - DragStart
 
     Main.Position = UDim2.new(
         StartPosition.X.Scale,
         StartPosition.X.Offset + Delta.X,
+
         StartPosition.Y.Scale,
         StartPosition.Y.Offset + Delta.Y
     )
+
 end)
 
 --==================================================
@@ -836,22 +1298,14 @@ local Minimized = false
 local NormalSize = Main.Size
 
 Minimize.MouseButton1Click:Connect(function()
-    Minimized = not Minimized
 
     if Minimized then
-        Minimize.Text = "+"
-        Scroll.Visible = false
 
-        TweenService:Create(
-            Main,
-            TweenInfo.new(
-                0.2,
-                Enum.EasingStyle.Quint,
-                Enum.EasingDirection.Out
-            ),
-            {Size = UDim2.fromOffset(430, 70)}
-        ):Play()
-    else
+        Minimized = false
+
+        CategoryBar.Visible = true
+        Content.Visible = true
+
         Minimize.Text = "−"
 
         TweenService:Create(
@@ -861,37 +1315,194 @@ Minimize.MouseButton1Click:Connect(function()
                 Enum.EasingStyle.Quint,
                 Enum.EasingDirection.Out
             ),
-            {Size = NormalSize}
+            {
+                Size = NormalSize
+            }
         ):Play()
 
-        task.delay(0.08, function()
-            if not Minimized then
-                Scroll.Visible = true
-            end
-        end)
+    else
+
+        Minimized = true
+
+        CategoryBar.Visible = false
+        Content.Visible = false
+
+        Minimize.Text = "+"
+
+        TweenService:Create(
+            Main,
+            TweenInfo.new(
+                0.2,
+                Enum.EasingStyle.Quint,
+                Enum.EasingDirection.Out
+            ),
+            {
+                Size = UDim2.fromOffset(600, 65)
+            }
+        ):Play()
+
     end
+
 end)
+
+--==================================================
+-- SMALL CIRCLE
+--==================================================
+
+local Circle = Instance.new("TextButton")
+Circle.Name = "IVRSmallCircle"
+Circle.AnchorPoint = Vector2.new(0.5, 0.5)
+Circle.Size = UDim2.fromOffset(58, 58)
+Circle.Position = UDim2.fromScale(0.5, 0.5)
+Circle.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+Circle.BorderSizePixel = 0
+Circle.Text = "IVR"
+Circle.TextColor3 = Color3.new(1, 1, 1)
+Circle.TextSize = 14
+Circle.Font = Enum.Font.GothamBold
+Circle.Visible = false
+Circle.AutoButtonColor = false
+Circle.Parent = ScreenGui
+
+local CircleCorner = Instance.new("UICorner")
+CircleCorner.CornerRadius = UDim.new(1, 0)
+CircleCorner.Parent = Circle
+
+local CircleStroke = Instance.new("UIStroke")
+CircleStroke.Thickness = 3
+CircleStroke.Parent = Circle
+
+addRGB(CircleStroke, 0.5)
+
+--==================================================
+-- CIRCLE DRAGGING
+--==================================================
+
+local CircleDragging = false
+local CircleDragStart
+local CircleStartPosition
+local CircleMoved = false
+
+Circle.InputBegan:Connect(function(Input)
+
+    if Input.UserInputType == Enum.UserInputType.MouseButton1
+        or Input.UserInputType == Enum.UserInputType.Touch then
+
+        CircleDragging = true
+        CircleMoved = false
+        CircleDragStart = Input.Position
+        CircleStartPosition = Circle.Position
+
+    end
+
+end)
+
+Circle.InputEnded:Connect(function(Input)
+
+    if Input.UserInputType == Enum.UserInputType.MouseButton1
+        or Input.UserInputType == Enum.UserInputType.Touch then
+
+        CircleDragging = false
+
+    end
+
+end)
+
+UserInputService.InputChanged:Connect(function(Input)
+
+    if not CircleDragging then
+        return
+    end
+
+    if Input.UserInputType ~= Enum.UserInputType.MouseMovement
+        and Input.UserInputType ~= Enum.UserInputType.Touch then
+
+        return
+    end
+
+    local Delta =
+        Input.Position - CircleDragStart
+
+    if math.abs(Delta.X) > 5
+        or math.abs(Delta.Y) > 5 then
+
+        CircleMoved = true
+
+    end
+
+    Circle.Position = UDim2.new(
+        CircleStartPosition.X.Scale,
+        CircleStartPosition.X.Offset + Delta.X,
+
+        CircleStartPosition.Y.Scale,
+        CircleStartPosition.Y.Offset + Delta.Y
+    )
+
+end)
+
+--==================================================
+-- EXIT TO CIRCLE
+--==================================================
+
+Exit.MouseButton1Click:Connect(function()
+
+    Main.Visible = false
+    Circle.Visible = true
+
+end)
+
+Circle.MouseButton1Click:Connect(function()
+
+    if CircleMoved then
+        return
+    end
+
+    Circle.Visible = false
+    Main.Visible = true
+
+end)
+
+--==================================================
+-- INITIAL PAGE
+--==================================================
+
+showCategory("Automation")
+updateGuiScale()
 
 --==================================================
 -- CLEANUP
 --==================================================
 
 task.spawn(function()
-    while task.wait(2) do
+
+    while task.wait(3) do
+
         for Egg in pairs(HiddenEggs) do
-            if not Egg or not Egg.Parent then
+
+            if not Egg
+                or not Egg.Parent then
+
                 HiddenEggs[Egg] = nil
                 Collecting[Egg] = nil
+
             end
+
         end
+
     end
+
 end)
 
 ScreenGui.Destroying:Connect(function()
+
     if RGBConnection then
         RGBConnection:Disconnect()
     end
+
 end)
 
-print("🐔 IVR CHICKEN FARM loaded successfully.")
-print("✅ Anti-AFK enabled automatically.")
+print("================================")
+print(" IVR CHICKEN FARM")
+print(" Mobile Landscape UI")
+print(" Anti-AFK: ENABLED")
+print("================================")
